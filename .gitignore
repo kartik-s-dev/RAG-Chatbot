@@ -1,0 +1,13 @@
+# Sensitive keys and environment variables
+.env
+
+# Virtual Environment
+venv/
+
+# Vector database storage
+chroma_db/
+
+# Python cache & build outputs
+__pycache__/
+*.pyc
+.dist/
