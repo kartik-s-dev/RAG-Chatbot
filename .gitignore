@@ -6,6 +6,7 @@ venv/
 
 # Vector database storage
 chroma_db/
+chroma_db_temp/
 
 # Python cache & build outputs
 __pycache__/

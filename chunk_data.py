@@ -3,8 +3,8 @@ from load_data import load_pdf
 
 def chunk_documents(documents):
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800,
-        chunk_overlap=100
+        chunk_size=1500,
+        chunk_overlap=300
     )
     chunks = splitter.split_documents(documents)
     print(f"Created {len(chunks)} chunks")

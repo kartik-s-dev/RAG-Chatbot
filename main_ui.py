@@ -1,47 +1,39 @@
 import streamlit as st
-from rag_chain import build_chain
+from rag_chain import get_wrapped_chain
 
-# Page setup
-st.set_page_config(page_title="RAG Chatbot", page_icon="🤖", layout="centered")
+st.set_page_config(page_title="RAG Chatbot", page_icon="🤖")
 
 st.title("🤖 Document QA - RAG Chatbot")
-st.caption("Powered by Llama 3.3 (Groq) & LangChain Chroma Vector Store")
+st.caption("Powered by LangChain, Chroma Vector Store & Gemini")
 
-# Initialize RAG Chain once
 @st.cache_resource
 def load_rag_chain():
-    return build_chain()
+    return get_wrapped_chain()
 
 try:
     chain = load_rag_chain()
+    
+    if "messages" not in st.session_state:
+        st.session_state.messages = [
+            {"role": "assistant", "content": "Hello! I have loaded your PDF document. Ask me anything about it!"}
+        ]
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if prompt := st.chat_input("Ask a question about your document..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            with st.spinner("Searching document..."):
+                res = chain.invoke({"query": prompt})
+                response = res["result"]
+                st.markdown(response)
+                
+        st.session_state.messages.append({"role": "assistant", "content": response})
+
 except Exception as e:
     st.error(f"Error loading RAG Chain: {e}")
-    st.stop()
-
-# Initialize Chat History
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": "Hello! I have loaded your PDF document. Ask me anything about it!"}
-    ]
-
-# Display Chat History
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
-
-# User Query Input
-if user_query := st.chat_input("Ask a question about your document..."):
-    # Display user input
-    st.session_state.messages.append({"role": "user", "content": user_query})
-    with st.chat_message("user"):
-        st.write(user_query)
-
-    # Generate & Display Assistant Response
-    with st.chat_message("assistant"):
-        with st.spinner("Searching document & generating answer..."):
-            try:
-                response = chain.invoke(user_query)
-                st.write(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-            except Exception as e:
-                st.error(f"Error generating answer: {e}")
