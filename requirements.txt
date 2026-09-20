@@ -4,3 +4,5 @@ langchain-google-genai
 chromadb
 pypdf
 python-dotenv
+langchain-huggingface
+sentence-transformers
