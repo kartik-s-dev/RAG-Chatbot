@@ -69,11 +69,17 @@ Answer:"""
 
 def get_wrapped_chain(persist_dir="chroma_db_temp"):
     """
-    Loads the vector store that build_vectorstore.py created,
-    and returns a ready-to-use RAG chain. Called by main_ui.py.
+    Loads the vector store. If it doesn't exist yet (e.g. fresh deployment
+    where the database folder isn't committed to git), builds it fresh
+    from the PDF in data/source.pdf.
     """
     from langchain_huggingface import HuggingFaceEmbeddings
     from langchain_community.vectorstores import Chroma
+
+    # If the vector store doesn't exist or is empty, build it from the PDF first
+    if not os.path.exists(persist_dir) or not os.listdir(persist_dir):
+        from build_vectorstore import build_store_from_pdf
+        build_store_from_pdf("data/source.pdf", persist_dir=persist_dir)
 
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     vectordb = Chroma(
