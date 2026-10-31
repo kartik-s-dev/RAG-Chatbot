@@ -12,3 +12,6 @@ chroma_db_temp/
 __pycache__/
 *.pyc
 .dist/
+# Local venv and test database
+.venv/
+test_db/
