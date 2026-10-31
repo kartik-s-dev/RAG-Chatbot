@@ -76,14 +76,18 @@ def get_wrapped_chain(persist_dir="chroma_db_temp"):
     from langchain_huggingface import HuggingFaceEmbeddings
     from langchain_community.vectorstores import Chroma
 
-    # If the vector store doesn't exist or is empty, build it from the PDF first
-    if not os.path.exists(persist_dir) or not os.listdir(persist_dir):
-        from build_vectorstore import build_store_from_pdf
-        build_store_from_pdf("data/source.pdf", persist_dir=persist_dir)
-
+    # Open the store. If it has no documents, build it from the PDF and use
+    # the object that the build returns (do not reload from disk).
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    vectordb = Chroma(
-        persist_directory=persist_dir,
-        embedding_function=embeddings
-    )
+    try:
+        vectordb = Chroma(persist_directory=persist_dir, embedding_function=embeddings)
+        doc_count = len(vectordb.get()["ids"])
+    except Exception:
+        vectordb = None
+        doc_count = 0
+
+    if doc_count == 0:
+        from build_vectorstore import build_store_from_pdf
+        vectordb = build_store_from_pdf("data/source.pdf", persist_dir=persist_dir)
+
     return build_chain_from_store(vectordb)
