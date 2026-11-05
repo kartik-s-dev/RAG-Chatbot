@@ -1,28 +1,47 @@
-# RAG Chatbot - Document Q&A with LangChain, ChromaDB & Groq (Llama 3.3)
+# RAG Chatbot - Chat with Your PDF (LangChain, ChromaDB, Gemini)
 
-An end-to-end Retrieval-Augmented Generation (RAG) system that allows users to query PDF documents and get accurate, context-grounded answers.
+A Retrieval-Augmented Generation (RAG) app. Upload a PDF, ask questions, and get answers based on the retrieved parts of that document.
 
-## Architecture & Data Flow
-1. **PDF Ingestion**: `load_data.py` extracts text using `PyPDFLoader`.
-2. **Chunking**: `chunk_data.py` splits documents into overlapping passages.
-3. **Embeddings & Vector Store**: `build_vectorstore.py` generates embeddings using HuggingFace (`all-MiniLM-L6-v2`) and persists them in `ChromaDB`.
-4. **Retrieval**: `retriever.py` fetches the top relevant chunks for any user question.
-5. **Generation**: `rag_chain.py` uses Groq's `llama-3.3-70b-versatile` model to answer based strictly on retrieved context.
-6. **Web Interface**: `main_ui.py` provides an interactive Streamlit UI.
+Live demo: https://kartik-rag-chatbot.streamlit.app
 
-## Tech Stack
+## How it works
+1. **Upload**: `main_ui.py` (Streamlit) takes a PDF upload.
+2. **Chunking and embeddings**: `build_vectorstore.py` splits the PDF (chunk size 1500, overlap 300) and embeds it with HuggingFace `all-MiniLM-L6-v2`.
+3. **Vector store**: chunks are stored in Chroma (temporary, per upload).
+4. **Retrieval**: top 6 similar chunks are fetched for each question.
+5. **Answer**: `rag_chain.py` sends the question and chunks to a Google Gemini model. If one model fails, it tries the next.
+6. **Sources**: the app shows the retrieved chunks (first 200 characters each).
+
+## Tech stack
 * Python 3.13
-* LangChain & LangChain Community
-* ChromaDB (Vector Store)
-* HuggingFace Transformers (Embeddings)
-* Groq API (Llama 3.3 70B LLM)
-* Streamlit (UI Frontend)
+* LangChain
+* ChromaDB
+* HuggingFace sentence-transformers (embeddings)
+* Google Gemini (LLM)
+* Streamlit (UI)
 
-## Setup Instructions
-
-### 1. Clone & Setup Environment
+## Run locally
 ```bash
-git clone <your-github-repo-url>
+git clone https://github.com/kartik-s-dev/RAG-Chatbot.git
 cd RAG-Chatbot
-python -m venv venv
-venv\Scripts\activate   # On Windows
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Create a `.env` file with your Google API key:
+
+```
+GOOGLE_API_KEY=your_key_here
+```
+
+Then run:
+
+```bash
+streamlit run main_ui.py
+```
+
+## Limitations
+* Answers can be wrong if the retrieved chunks miss the answer.
+* Scanned (image-only) PDFs are not supported.
+* Each upload builds a new temporary index.
